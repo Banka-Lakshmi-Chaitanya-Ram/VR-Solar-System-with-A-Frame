@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Solaris — Interactive 3D Planetarium &amp; VR Solar System</title>
+  <meta name="description" content="Explore an interactive 3D and WebXR virtual reality planetarium of the Solar System. Features accurate orbital mechanics, authentic NASA textures, planetary telemetry, space exploration missions, and cultural astrology history.">
+  <meta name="keywords" content="Solar System, Planetarium, A-Frame, WebXR, 3D Astronomy, NASA, Planets, VR">
+  <meta name="author" content="Solaris Space Observatory">
+  <meta name="theme-color" content="#020409">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Solaris — Interactive 3D Planetarium &amp; VR Solar System">
+  <meta property="og:description" content="Educational 3D planetarium and WebXR virtual reality solar system observatory using A-Frame.">
+  <meta property="og:type" content="website">
+
+  <!-- Typography: Google Fonts Newsreader, Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+
+  <!-- A-Frame WebXR Framework (v1.6.0) -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Core Simulation Logic & Components -->
+  <script src="app.js"></script>
+</head>
+<body>
+
+  <!-- ===================================================================
+       LIGHTWEIGHT COSMIC LOADER
+       =================================================================== -->
+  <div id="loader-overlay" role="status" aria-live="polite">
+    <div class="loader-gyroscope">
+      <div class="loader-gyro-core"></div>
+      <div class="loader-gyro-ring"></div>
+      <div class="loader-gyro-ring"></div>
+    </div>
+    <div class="loader-text-group">
+      <div class="loader-brand">SOLARIS</div>
+      <div class="loader-status">CALIBRATING EPHEMERIDES &amp; CELESTIAL ORBITS...</div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       TOP OBSERVATORY HEADER
+       =================================================================== -->
+  <header id="top-hud">
+    <div class="brand-section">
+      <span class="brand-symbol">☉</span>
+      <span class="brand-title">SOLARIS</span>
+      <span class="brand-subtitle">PLANETARIUM OBSERVATORY</span>
+    </div>
+
+    <!-- Center: View Presets -->
+    <div class="camera-segmented-controls" role="group" aria-label="Camera Perspectives">
+      <button class="seg-btn active" data-preset="overview" title="Angled 3D Isometric View (Key: V)" aria-label="Angled 3D Isometric View">Overview</button>
+      <button class="seg-btn" data-preset="topdown" title="Top-Down Polar Map View (Key: T)" aria-label="Top-Down Polar Map View">Polar Map</button>
+      <button class="seg-btn" data-preset="ecliptic" title="Ecliptic Orbital Plane View" aria-label="Ecliptic Orbital Plane View">Ecliptic</button>
+    </div>
+
+    <!-- Right: Utility Toggles -->
+    <div class="hud-utilities">
+      <button id="btn-toggle-orbits" class="util-btn active" title="Hide orbital paths (Key: O)" aria-label="Hide orbital paths" aria-pressed="true">
+        <span>⚬</span>
+        <span class="util-btn-text">Orbits</span>
+      </button>
+
+      <button id="btn-toggle-labels" class="util-btn active" title="Hide planet labels (Key: L)" aria-label="Hide planet labels" aria-pressed="true">
+        <span>🏷️</span>
+        <span class="util-btn-text">Labels</span>
+      </button>
+
+      <button id="btn-audio" class="util-btn" title="Play ambient sound" aria-label="Play ambient sound" aria-pressed="false">
+        <span id="audio-icon">🔇</span>
+        <span class="util-btn-text">Ambient</span>
+      </button>
+
+      <button id="btn-help" class="util-btn" title="Exploration guide &amp; shortcuts (Key: ?)" aria-label="Exploration guide and keyboard shortcuts">
+        <span>?</span>
+        <span class="util-btn-text">Guide</span>
+      </button>
+
+      <button id="btn-enter-vr" class="util-btn util-btn-vr" title="Enter WebXR Virtual Reality" aria-label="Enter WebXR Virtual Reality">
+        <span>🥽</span>
+        <span class="util-btn-text">VR Mode</span>
+      </button>
+
+      <!-- Mobile Menu Button (Visible on mobile/tablet) -->
+      <button id="btn-mobile-menu" class="util-btn util-btn-menu" title="Open Settings &amp; View Menu" aria-label="Open Settings and View Menu" aria-expanded="false">
+        <span id="menu-icon">☰</span>
+        <span class="util-btn-text">Menu</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================================================================
+       MOBILE OVERFLOW MENU DRAWER (EXPANDABLE SECONDARY CONTROLS)
+       =================================================================== -->
+  <div id="mobile-menu-drawer" class="mobile-menu-drawer" role="dialog" aria-modal="true" aria-label="Observatory Settings and Perspectives">
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-header">
+        <div class="mobile-menu-title">
+          <span>⚙️</span>
+          <span>Observatory Controls</span>
+        </div>
+        <button id="btn-close-mobile-menu" class="dossier-close-btn" title="Close Menu" aria-label="Close Menu">&times;</button>
+      </div>
+
+      <div class="mobile-menu-section">
+        <div class="mobile-menu-section-label">Camera Perspectives</div>
+        <div class="mobile-menu-presets">
+          <button class="mobile-preset-btn active" data-preset="overview">Overview (3D)</button>
+          <button class="mobile-preset-btn" data-preset="topdown">Polar Map</button>
+          <button class="mobile-preset-btn" data-preset="ecliptic">Ecliptic</button>
+        </div>
+      </div>
+
+      <div class="mobile-menu-section">
+        <div class="mobile-menu-section-label">Display &amp; Audio</div>
+        <div class="mobile-menu-grid">
+          <button id="btn-mobile-orbits" class="mobile-toggle-btn active" aria-pressed="true">
+            <span>⚬ Orbits</span>
+            <span class="toggle-indicator" id="mobile-orbits-indicator">ON</span>
+          </button>
+          <button id="btn-mobile-labels" class="mobile-toggle-btn active" aria-pressed="true">
+            <span>🏷️ Labels</span>
+            <span class="toggle-indicator" id="mobile-labels-indicator">ON</span>
+          </button>
+          <button id="btn-mobile-audio" class="mobile-toggle-btn" aria-pressed="false">
+            <span id="mobile-audio-text">🔇 Ambient</span>
+            <span class="toggle-indicator" id="mobile-audio-indicator">OFF</span>
+          </button>
+          <button id="btn-mobile-vr" class="mobile-toggle-btn">
+            <span>🥽 WebXR VR</span>
+            <span class="toggle-indicator">START</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile-menu-section">
+        <div class="mobile-menu-section-label">Simulation Speed</div>
+        <div class="mobile-speed-selector">
+          <button class="mobile-speed-btn" data-speed="0.5">0.5x</button>
+          <button class="mobile-speed-btn active" data-speed="1.0">1x</button>
+          <button class="mobile-speed-btn" data-speed="2.0">2x</button>
+          <button class="mobile-speed-btn" data-speed="5.0">5x</button>
+        </div>
+      </div>
+
+      <div class="mobile-menu-footer">
+        <button id="btn-mobile-guide" class="mobile-guide-btn">
+          <span>?</span>
+          <span>View Shortcuts &amp; Guide</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       INITIAL EXPLORATION HINT (HUMAN-CENTERED CONTEXTUAL GUIDANCE)
+       =================================================================== -->
+  <aside id="onboarding-hint" class="exploration-hint" role="note" aria-label="Exploration guidance">
+    <span>Click or tap any planet to inspect its data, or drag to orbit the scene.</span>
+    <button id="btn-dismiss-hint" class="hint-dismiss-btn" title="Dismiss hint" aria-label="Dismiss hint">&times;</button>
+  </aside>
+
+  <!-- ===================================================================
+       BOTTOM CELESTIAL NAVIGATOR & SIMULATION TRANSPORT
+       =================================================================== -->
+  <footer id="bottom-hud">
+    <!-- Left: Simulation Transport Controls -->
+    <div class="transport-group">
+      <button id="btn-play-pause" class="transport-btn btn-play active" title="Pause simulation (Spacebar)" aria-label="Pause simulation" aria-pressed="true">
+        <span id="play-pause-icon">⏸</span>
+        <span id="play-pause-label">Pause</span>
+      </button>
+
+      <button id="btn-reset" class="transport-btn" title="Reset planetary orbits to initial alignment (Key: R)" aria-label="Reset planetary orbits">
+        <span>↺</span>
+        <span>Reset</span>
+      </button>
+
+      <!-- Time Multipliers -->
+      <div class="speed-selector" role="group" aria-label="Simulation Speed Multiplier">
+        <button class="speed-option" data-speed="0.5" aria-label="0.5 times speed">0.5x</button>
+        <button class="speed-option active" data-speed="1.0" aria-label="1.0 times speed (normal)">1x</button>
+        <button class="speed-option" data-speed="2.0" aria-label="2.0 times speed">2x</button>
+        <button class="speed-option" data-speed="5.0" aria-label="5.0 times speed">5x</button>
+      </div>
+    </div>
+
+    <!-- Center/Right: Celestial Navigation Strip -->
+    <nav class="celestial-strip" id="celestial-strip" aria-label="Celestial Bodies Quick Navigation">
+      <!-- Populated dynamically via app.js with Sun and all 8 planets -->
+    </nav>
+  </footer>
+
+  <!-- ===================================================================
+       MASTER PLANETARIUM DOSSIER (MOBILE BOTTOM SHEET & DESKTOP DRAWER)
+       =================================================================== -->
+  <aside id="planet-dossier" aria-label="Planetarium Celestial Dossier">
+    <!-- Clickable / Draggable Handle Zone (Mobile Bottom Sheet) -->
+    <div class="dossier-drag-handle-zone" id="dossier-drag-zone" title="Tap to expand or collapse full details" role="button" aria-label="Expand or collapse details">
+      <div class="dossier-drag-handle" aria-hidden="true"></div>
+      <div class="dossier-drag-hint" id="dossier-drag-hint">Tap to expand details ▲</div>
+    </div>
+
+    <!-- Dossier Header -->
+    <div class="dossier-header">
+      <div class="dossier-title-block">
+        <span class="dossier-classification" id="dossier-classification">3rd Planet from the Sun · Terrestrial Planet</span>
+        <div class="dossier-headline-row">
+          <button id="btn-prev-planet" class="planet-nav-arrow" title="Previous celestial body" aria-label="Previous celestial body">‹</button>
+          <h2 class="dossier-name">
+            <span id="dossier-name">Earth</span>
+            <span class="dossier-symbol" id="dossier-symbol">⊕</span>
+          </h2>
+          <button id="btn-next-planet" class="planet-nav-arrow" title="Next celestial body" aria-label="Next celestial body">›</button>
+        </div>
+        <div class="dossier-tagline" id="dossier-tagline">The Blue Oasis of Life and Liquid Oceans</div>
+      </div>
+      <button id="btn-close-dossier" class="dossier-close-btn" title="Close panel and return to overview (Esc)" aria-label="Close panel and return to overview">&times;</button>
+    </div>
+
+    <!-- Quick Facts Row (Always visible in compact and expanded states) -->
+    <div class="dossier-quick-facts" id="dossier-quick-facts" aria-label="Key Facts Summary">
+      <!-- Populated dynamically via app.js -->
+    </div>
+
+    <!-- Dossier Actions & Expand Toggle -->
+    <div class="dossier-actions">
+      <button id="btn-focus-planet" class="action-btn" title="Focus camera smoothly on planet" aria-label="Focus camera smoothly on planet">
+        <span>🔍</span>
+        <span>Focus Camera</span>
+      </button>
+      <button id="btn-follow-planet" class="action-btn" title="Ride along with planet in orbit" aria-label="Ride along with planet in orbit" aria-pressed="false">
+        <span>🛰️</span>
+        <span id="follow-btn-label">Follow in Orbit</span>
+      </button>
+      <button id="btn-expand-dossier" class="action-btn action-btn-expand" title="Expand or collapse full educational dossier" aria-label="Expand or collapse full educational dossier" aria-expanded="false">
+        <span id="expand-icon">▲</span>
+        <span id="expand-label">Full Details</span>
+      </button>
+    </div>
+
+    <!-- Dossier Navigation Tabs (Visible in expanded mobile state & always on desktop) -->
+    <div class="dossier-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="overview" role="tab" aria-selected="true">Overview</button>
+      <button class="tab-btn" data-tab="science" role="tab" aria-selected="false">Physical data</button>
+      <button class="tab-btn" data-tab="missions" role="tab" aria-selected="false">Missions</button>
+      <button class="tab-btn" data-tab="compare" role="tab" aria-selected="false">Earth comparison</button>
+      <button class="tab-btn tab-btn-astrology" data-tab="astrology" role="tab" aria-selected="false">Astrology &amp; lore</button>
+      <button class="tab-btn" data-tab="links" role="tab" aria-selected="false">Further reading</button>
+    </div>
+
+    <!-- Dossier Scrollable Content Area -->
+    <div class="dossier-content">
+      <div class="tab-pane active" id="pane-overview" role="tabpanel"></div>
+      <div class="tab-pane" id="pane-science" role="tabpanel"></div>
+      <div class="tab-pane" id="pane-missions" role="tabpanel"></div>
+      <div class="tab-pane" id="pane-compare" role="tabpanel"></div>
+      <div class="tab-pane" id="pane-astrology" role="tabpanel"></div>
+      <div class="tab-pane" id="pane-links" role="tabpanel"></div>
+    </div>
+  </aside>
+
+  <!-- ===================================================================
+       HELP & SHORTCUTS GUIDE MODAL
+       =================================================================== -->
+  <div id="help-modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-heading">
+          <span>🌌</span>
+          <span>Solaris Observatory Guide</span>
+        </h3>
+        <button id="btn-close-help" class="dossier-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <h4 class="modal-section-title">Desktop &amp; Laptop Navigation</h4>
+          <table class="shortcut-table">
+            <tr><td><span class="kbd">Left Click + Drag</span></td><td>Rotate 360° celestial viewpoint</td></tr>
+            <tr><td><span class="kbd">Scroll Wheel</span></td><td>Zoom camera closer / farther</td></tr>
+            <tr><td><span class="kbd">W</span> <span class="kbd">A</span> <span class="kbd">S</span> <span class="kbd">D</span></td><td>Fly camera through space</td></tr>
+            <tr><td><span class="kbd">Click Planet / Strip</span></td><td>Select and open detailed planetary dossier</td></tr>
+            <tr><td><span class="kbd">Spacebar</span></td><td>Pause / Resume orbital simulation</td></tr>
+            <tr><td><span class="kbd">R</span></td><td>Reset planetary positions to starting alignment</td></tr>
+            <tr><td><span class="kbd">O</span> / <span class="kbd">L</span></td><td>Toggle orbital path lines / 3D labels</td></tr>
+            <tr><td><span class="kbd">V</span> / <span class="kbd">T</span></td><td>System Overview / Polar Map perspectives</td></tr>
+            <tr><td><span class="kbd">1</span> – <span class="kbd">8</span></td><td>Direct jump to Mercury through Neptune</td></tr>
+            <tr><td><span class="kbd">Esc</span></td><td>Close dossier / return to system overview</td></tr>
+          </table>
+        </div>
+
+        <div>
+          <h4 class="modal-section-title">Mobile &amp; Tablet Touch Controls</h4>
+          <table class="shortcut-table">
+            <tr><td><span class="kbd">One-Finger Drag</span></td><td>Rotate 3D perspective around solar center</td></tr>
+            <tr><td><span class="kbd">Pinch Gesture</span></td><td>Zoom in and out smoothly</td></tr>
+            <tr><td><span class="kbd">Tap Celestial Body</span></td><td>Inspect body and open responsive bottom sheet</td></tr>
+          </table>
+        </div>
+
+        <div>
+          <h4 class="modal-section-title">WebXR Immersive Virtual Reality</h4>
+          <table class="shortcut-table">
+            <tr><td><span class="kbd">Headset Tracking</span></td><td>Natural 6DoF / 3DoF head orientation and movement</td></tr>
+            <tr><td><span class="kbd">VR Laser Controller</span></td><td>Point ray at celestial body and pull trigger to select</td></tr>
+            <tr><td><span class="kbd">VR Info Billboard</span></td><td>Holographic 3D telemetry card floating in virtual space</td></tr>
+          </table>
+        </div>
+
+        <div>
+          <h4 class="modal-section-title">Scientific Scaling Disclosures</h4>
+          <p style="font-size: 0.78rem; line-height: 1.45; color: var(--text-secondary);">
+            In nature, distance ratios (30 AU vs 0.39 AU) and diameter ratios (109:1 for Sun vs Earth) make exact linear rendering on desktop displays impractical. Solaris utilizes an <em>interactive visual scaling model</em> so every planet, ring, and orbit remains visible, distinguishable, and accessible.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       3D A-FRAME SCENE
+       =================================================================== -->
+  <div id="scene-container">
+    <a-scene
+      simulation-controller
+      cursor="rayOrigin: mouse"
+      raycaster="objects: .clickable"
+      renderer="antialias: true; colorManagement: true; logarithmicDepthBuffer: true; highRefreshRate: true;"
+      vr-mode-ui="enabled: true"
+      loading-screen="enabled: false">
+
+      <!-- Asset Preloading -->
+      <a-assets timeout="10000">
+        <img id="tex-space" src="assets/textures/deep_space_starfield.png" alt="Deep Space Starfield">
+        <img id="tex-sun" src="assets/textures/sun.jpg" alt="Solar Photosphere">
+        <img id="tex-mercury" src="assets/textures/mercury.jpg" alt="Mercury Surface">
+        <img id="tex-venus" src="assets/textures/venus.jpg" alt="Venus Atmosphere">
+        <img id="tex-earth" src="assets/textures/earth.jpg" alt="Earth Surface">
+        <img id="tex-moon" src="assets/textures/moon.jpg" alt="Moon Surface">
+        <img id="tex-mars" src="assets/textures/mars.jpg" alt="Mars Surface">
+        <img id="tex-jupiter" src="assets/textures/jupiter.jpg" alt="Jupiter Cloud Bands">
+        <img id="tex-saturn" src="assets/textures/saturn.jpg" alt="Saturn Atmosphere">
+        <img id="tex-saturn-ring" src="assets/textures/saturn-ring.png" alt="Saturn Rings">
+        <img id="tex-uranus" src="assets/textures/uranus.jpg" alt="Uranus Atmosphere">
+        <img id="tex-neptune" src="assets/textures/neptune.jpg" alt="Neptune Atmosphere">
+      </a-assets>
+
+      <!-- Deep Space Velvet Starfield Skybox -->
+      <a-sky src="#tex-space" radius="450" rotation="0 -90 0"></a-sky>
+
+      <!-- ===============================================================
+           SCENE LIGHTING ARCHITECTURE
+           =============================================================== -->
+      <!-- Soft Cosmic Ambient Light (keeps night hemispheres subtly visible with fine contrast) -->
+      <a-light type="ambient" color="#1e293b" intensity="0.36"></a-light>
+
+      <!-- Central Solar Point Light (casts realistic daylight/night terminators on planets) -->
+      <a-light type="point" color="#ffffff" intensity="2.1" distance="450" decay="1.0" position="0 0 0"></a-light>
+
+      <!-- Subtle directional fill light for 3D sphere depth -->
+      <a-light type="directional" color="#38bdf8" intensity="0.18" position="0 40 25"></a-light>
+
+      <!-- ===============================================================
+           THE SUN (CENTER)
+           =============================================================== -->
+      <a-entity id="container-sun" position="0 0 0">
+        <!-- Sun Photosphere Sphere -->
+        <a-sphere
+          id="sphere-sun"
+          class="clickable planet-sphere"
+          data-planet-id="sun"
+          radius="3.2"
+          material="src: #tex-sun; shader: flat; color: #ffffff"
+          rotation="0 0 0"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 50000; easing: linear">
+        </a-sphere>
+
+        <!-- Subtle Corona Glow Halo (Warm, controlled, non-washed out) -->
+        <a-sphere
+          radius="3.4"
+          material="color: #ff9e00; shader: flat; transparent: true; opacity: 0.10; side: back"
+          animation="property: scale; to: 1.04 1.04 1.04; dir: alternate; loop: true; dur: 3500; easing: easeInOutSine">
+        </a-sphere>
+
+        <!-- Sun 3D Label -->
+        <a-entity
+          billboard-label
+          position="0 4.4 0"
+          text="value: The Sun (Sol); align: center; color: #ffd166; width: 16; font: exo2bold">
+        </a-entity>
+      </a-entity>
+
+      <!-- ===============================================================
+           PLANETARY ORBITS & BODIES
+           =============================================================== -->
+
+      <!-- 1. MERCURY -->
+      <a-entity id="orbit-mercury" orbit-path="radius: 6.5; color: #a8a8a8; opacity: 0.22"></a-entity>
+      <a-entity id="container-mercury" position="6.5 0 0">
+        <a-entity rotation="0.034 0 0">
+          <a-sphere
+            id="sphere-mercury"
+            class="clickable planet-sphere"
+            data-planet-id="mercury"
+            radius="0.38"
+            material="src: #tex-mercury; roughness: 0.9; metalness: 0.1">
+          </a-sphere>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 1.0 0"
+          text="value: Mercury; align: center; color: #e2e8f0; width: 9">
+        </a-entity>
+      </a-entity>
+
+      <!-- 2. VENUS -->
+      <a-entity id="orbit-venus" orbit-path="radius: 9.8; color: #e0a96d; opacity: 0.22"></a-entity>
+      <a-entity id="container-venus" position="9.8 0 0">
+        <a-entity rotation="177.3 0 0">
+          <a-sphere
+            id="sphere-venus"
+            class="clickable planet-sphere"
+            data-planet-id="venus"
+            radius="0.72"
+            material="src: #tex-venus; roughness: 0.8; metalness: 0.05">
+          </a-sphere>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 1.4 0"
+          text="value: Venus; align: center; color: #fde68a; width: 9">
+        </a-entity>
+      </a-entity>
+
+      <!-- 3. EARTH & MOON -->
+      <a-entity id="orbit-earth" orbit-path="radius: 13.8; color: #48cae4; opacity: 0.25"></a-entity>
+      <a-entity id="container-earth" position="13.8 0 0">
+        <a-entity rotation="23.44 0 0">
+          <a-sphere
+            id="sphere-earth"
+            class="clickable planet-sphere"
+            data-planet-id="earth"
+            radius="0.76"
+            material="src: #tex-earth; roughness: 0.7; metalness: 0.1">
+          </a-sphere>
+
+          <!-- Orbiting Moon -->
+          <a-entity id="earth-moon-pivot" position="0 0 0">
+            <a-sphere
+              radius="0.18"
+              position="1.4 0 0"
+              material="src: #tex-moon; roughness: 0.9">
+            </a-sphere>
+          </a-entity>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 1.5 0"
+          text="value: Earth; align: center; color: #7dd3fc; width: 9">
+        </a-entity>
+      </a-entity>
+
+      <!-- 4. MARS -->
+      <a-entity id="orbit-mars" orbit-path="radius: 18.0; color: #f77f00; opacity: 0.22"></a-entity>
+      <a-entity id="container-mars" position="18.0 0 0">
+        <a-entity rotation="25.19 0 0">
+          <a-sphere
+            id="sphere-mars"
+            class="clickable planet-sphere"
+            data-planet-id="mars"
+            radius="0.48"
+            material="src: #tex-mars; roughness: 0.85; metalness: 0.1">
+          </a-sphere>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 1.2 0"
+          text="value: Mars; align: center; color: #fdba74; width: 9">
+        </a-entity>
+      </a-entity>
+
+      <!-- 5. JUPITER -->
+      <a-entity id="orbit-jupiter" orbit-path="radius: 24.5; color: #bc6c25; opacity: 0.22"></a-entity>
+      <a-entity id="container-jupiter" position="24.5 0 0">
+        <a-entity rotation="3.13 0 0">
+          <a-sphere
+            id="sphere-jupiter"
+            class="clickable planet-sphere"
+            data-planet-id="jupiter"
+            radius="1.95"
+            material="src: #tex-jupiter; roughness: 0.75; metalness: 0.05">
+          </a-sphere>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 2.8 0"
+          text="value: Jupiter; align: center; color: #fed7aa; width: 12">
+        </a-entity>
+      </a-entity>
+
+      <!-- 6. SATURN & AUTHENTIC RINGS -->
+      <a-entity id="orbit-saturn" orbit-path="radius: 32.0; color: #e9c46a; opacity: 0.22"></a-entity>
+      <a-entity id="container-saturn" position="32.0 0 0">
+        <a-entity rotation="26.73 0 0">
+          <a-sphere
+            id="sphere-saturn"
+            class="clickable planet-sphere"
+            data-planet-id="saturn"
+            radius="1.50"
+            material="src: #tex-saturn; roughness: 0.75; metalness: 0.05">
+          </a-sphere>
+
+          <!-- Proportionate, Authentic Ring System -->
+          <a-entity planetary-ring="innerRadius: 1.85; outerRadius: 3.35; src: #tex-saturn-ring; color: #e9c46a; opacity: 0.92"></a-entity>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 2.4 0"
+          text="value: Saturn; align: center; color: #fef08a; width: 11">
+        </a-entity>
+      </a-entity>
+
+      <!-- 7. URANUS -->
+      <a-entity id="orbit-uranus" orbit-path="radius: 39.5; color: #90e0ef; opacity: 0.20"></a-entity>
+      <a-entity id="container-uranus" position="39.5 0 0">
+        <a-entity rotation="97.77 0 0">
+          <a-sphere
+            id="sphere-uranus"
+            class="clickable planet-sphere"
+            data-planet-id="uranus"
+            radius="1.05"
+            material="src: #tex-uranus; roughness: 0.8; metalness: 0.05">
+          </a-sphere>
+
+          <!-- Subtle, understated Uranus Ring -->
+          <a-entity planetary-ring="innerRadius: 1.28; outerRadius: 1.55; color: #90e0ef; opacity: 0.4"></a-entity>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 1.8 0"
+          text="value: Uranus; align: center; color: #a5f3fc; width: 10">
+        </a-entity>
+      </a-entity>
+
+      <!-- 8. NEPTUNE -->
+      <a-entity id="orbit-neptune" orbit-path="radius: 46.5; color: #0077b6; opacity: 0.20"></a-entity>
+      <a-entity id="container-neptune" position="46.5 0 0">
+        <a-entity rotation="28.32 0 0">
+          <a-sphere
+            id="sphere-neptune"
+            class="clickable planet-sphere"
+            data-planet-id="neptune"
+            radius="1.02"
+            material="src: #tex-neptune; roughness: 0.8; metalness: 0.05">
+          </a-sphere>
+        </a-entity>
+        <a-entity
+          billboard-label
+          position="0 1.8 0"
+          text="value: Neptune; align: center; color: #67e8f9; width: 10">
+        </a-entity>
+      </a-entity>
+
+      <!-- ===============================================================
+           SELECTION TARGET MARKER RING
+           =============================================================== -->
+      <a-entity id="selection-marker" visible="false">
+        <a-ring
+          radius-inner="2.5"
+          radius-outer="2.65"
+          material="color: #00e5ff; shader: flat; side: double; transparent: true; opacity: 0.85"
+          rotation="-90 0 0"
+          animation="property: rotation; to: -90 360 0; loop: true; dur: 9000; easing: linear">
+        </a-ring>
+      </a-entity>
+
+      <!-- ===============================================================
+           VR IMMERSIVE 3D BILLBOARD HUD
+           =============================================================== -->
+      <a-entity id="vr-info-billboard" vr-info-billboard visible="false" position="0 2.2 -3.5">
+        <a-plane width="3.2" height="2.0" material="color: #050b18; opacity: 0.90; transparent: true; shader: flat"></a-plane>
+        <a-plane width="3.24" height="2.04" material="color: #00e5ff; opacity: 0.45; transparent: true; wireframe: true"></a-plane>
+        <a-text id="vr-billboard-title" value="Earth (⊕)" align="center" position="0 0.65 0.02" color="#00e5ff" width="5.5"></a-text>
+        <a-text id="vr-billboard-stats" value="Loading telemetry..." align="left" position="-1.35 -0.15 0.02" color="#e2e8f0" width="3.2" line-height="58"></a-text>
+      </a-entity>
+
+      <!-- ===============================================================
+           CAMERA RIG & CONTROLLERS
+           =============================================================== -->
+      <a-entity id="camera-rig" position="0 30 58" rotation="-26 0 0">
+        <a-camera
+          id="main-camera"
+          look-controls="pointerLockEnabled: false; reverseMouseDrag: false"
+          wasd-controls="fly: true; acceleration: 50">
+          <!-- Non-intrusive cursor for raycast selection -->
+          <a-cursor
+            id="mouse-cursor"
+            raycaster="objects: .clickable; far: 400"
+            cursor="fuse: false"
+            material="color: #00e5ff; shader: flat; opacity: 0.65"
+            geometry="primitive: ring; radiusInner: 0.002; radiusOuter: 0.0045">
+          </a-cursor>
+        </a-camera>
+
+        <!-- WebXR Laser Controllers -->
+        <a-entity
+          id="right-controller"
+          laser-controls="hand: right"
+          raycaster="objects: .clickable; far: 400"
+          line="color: #00e5ff; opacity: 0.8">
+        </a-entity>
+        <a-entity
+          id="left-controller"
+          laser-controls="hand: left"
+          raycaster="objects: .clickable; far: 400"
+          line="color: #ffd166; opacity: 0.8">
+        </a-entity>
+      </a-entity>
+
+    </a-scene>
+  </div>
+
+</body>
+</html>
